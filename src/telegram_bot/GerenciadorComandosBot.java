@@ -1,6 +1,6 @@
 package telegram_bot;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
@@ -8,16 +8,18 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class GerenciadorComandosBot {
-	// public static Map<String, ComandoBot> mapComandos;
+
 	public static ComandoBot[] arrayTodosComandos;
 	private static Stack<String> pilhaComandosPai;
 
-	public static void inicializar() {
+	private static MoviesApi moviesApi;
+
+	public static void inicializar(String apiKeyMovies) {
 		// Collection que armazenará os comandos disponíveis
 		// mapComandos = new HashMap<String, ComandoBot>();
 		arrayTodosComandos = new ComandoBot[] {
 				new ComandoBot("/help", "Exibir lista de comandos disponíveis", funcaoHelp()),
-				new ComandoBot("/nomedev", "Exibir Retorna o nome do desenvolvedor do bot", funcaoNomeDev(), "/inicio"),
+				new ComandoBot("/nomedev", "Exibir o nome do desenvolvedor do bot", funcaoNomeDev(), "/inicio"),
 				new ComandoBot("/dataatual", "Informa a última data de atualização do bot", funcaoDataAtual(),
 						"/inicio"),
 				new ComandoBot("/alfanumericos", "Grupo alfanumericos", funcaoAlfanumericos(), "/inicio"),
@@ -27,11 +29,14 @@ public class GerenciadorComandosBot {
 				new ComandoBot("/numeros", "Grupo numeros", funcaoNumeros(), "/alfanumericos"),
 				new ComandoBot("/numerospares", "Grupo numerospares", funcaoNumerosPares(), "/numeros"),
 				new ComandoBot("/numerosimpares", "Grupo numerosimpares", funcaoNumerosImpares(), "/numeros"),
-				new ComandoBot("/inicio", "Comando Inicial", funcaoStart()) };
+				new ComandoBot("/buscarfilme", "Buscar filme", funcaoBuscarFilme(), "/inicio"),
+				new ComandoBot("/voltar", "Retornar para o comando anterior", funcaoVoltar()) };
 
 		// Instancia a pilha de comandos pai
 		pilhaComandosPai = new Stack<String>();
 		pilhaComandosPai.add("/inicio");
+
+		moviesApi = new MoviesApi(apiKeyMovies);
 	}
 
 	private static String getComandoPaiAtual() {
@@ -57,6 +62,10 @@ public class GerenciadorComandosBot {
 
 	public static void printarStrPilha() {
 		Console.printarComentario(pilhaComandosPai.toString());
+	}
+
+	public static boolean verificarSeComandoAlterouPilha(String comando) {
+		return comando.equals("/voltar") || getComandoPaiAtual().equals(comando);
 	}
 
 	public static String tentarExecutarFuncao(String comando) {
@@ -97,12 +106,7 @@ public class GerenciadorComandosBot {
 		return streamComandosEncontrados.toList();
 	}
 
-	/*
-	 * public static String retornarStrListaComandos() { return
-	 * retornarStrListaComandos("/inicio"); }
-	 */
-
-	public static String retornarStrListaComandos(/* String comandoPai */) {
+	public static String retornarStrListaComandos() {
 		// Retorna array de comandos disponíveis
 		List<ComandoBot> listaComandosFilhos = retornarListaComandosFilhos(null);
 
@@ -123,37 +127,6 @@ public class GerenciadorComandosBot {
 		// Retorna string resultante do buffer
 		return stringBuilderComandos.toString();
 	}
-
-	/*public static List<ComandoBot> retornarListaComandosFilhos() {
-		return retornarListaComandosFilhos("/inicio");
-	}
-
-	public static List<ComandoBot> retornarListaComandosFilhos(String comandoPai) {
-		// Armazena lista de comandos
-		List<ComandoBot> listaComandosFilhos = new ArrayList<ComandoBot>();
-
-		// Caso esteja buscando por comandos iniciais (sem comando pai)
-		if (comandoPai == null || comandoPai.length() == 0 || comandoPai.equals("/inicio")) {
-			for (ComandoBot comandoBot : arrayTodosComandos) {
-				// Adiciona apenas comandos iniciais (sem comando pai)
-				if (comandoBot.getComandoPai().equals("/inicio")) {
-					listaComandosFilhos.add(comandoBot);
-				}
-			}
-
-			return listaComandosFilhos;
-		}
-
-		// Caso esteja buscando por comandos com um pai definido
-		for (ComandoBot comandoBot : arrayTodosComandos) {
-			if (comandoBot.getComandoPai().equals(comandoPai)) {
-				// Adiciona apenas comandos com esse comando pai em comum
-				listaComandosFilhos.add(comandoBot);
-			}
-		}
-
-		return listaComandosFilhos;
-	}*/
 
 	/// Funções executadas pelos comandos
 
@@ -221,10 +194,49 @@ public class GerenciadorComandosBot {
 		};
 	}
 
-	private static Function<String, String> funcaoStart() {
+	private static Function<String, String> funcaoVoltar() {
 		return parametro -> {
-			GerenciadorComandosBot.voltarAoComandoInicialDaPilha();
-			return "Você retornou para o comando inicial";
+			String comandoPaiAnterior = GerenciadorComandosBot.getComandoPaiAtual();
+			GerenciadorComandosBot.voltarUmComandoNaPilha();
+			String comandoPaiAtual = GerenciadorComandosBot.getComandoPaiAtual();
+
+			if (comandoPaiAnterior == comandoPaiAtual) {
+				return "Você já se encontra no comando inicial";
+			}
+
+			return "Você retornou para o comando " + comandoPaiAtual;
+		};
+	}
+
+	private static Function<String, String> funcaoBuscarFilme() {
+		return parametro -> {
+
+			List<String> listaFilmes;
+
+			try {
+				// listaFilmes = moviesApi.buscarFilme(parametro);
+				listaFilmes = moviesApi.buscarFilme("game");
+
+				if (listaFilmes.isEmpty()) {
+					return "Nenhum filme encontrado";
+				}
+
+				// Inicializa um buffer de strings, para concatenar os filmes encontrados
+				StringBuilder stringBuilderComandos = new StringBuilder("Filmes encontrados:");
+
+				// Adiciona cada um dos filmes no buffer de strings
+				for (String filme : listaFilmes) {
+					stringBuilderComandos.append("\n");
+					stringBuilderComandos.append(filme);
+				}
+
+				// Retorna string resultante do buffer
+				return stringBuilderComandos.toString();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return "Erro ao buscar filme";
+			}
 		};
 	}
 

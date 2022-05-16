@@ -46,10 +46,8 @@ public class ComandoBot implements Comparable<ComandoBot> {
 
 	public String getInfo() {
 		// Retorna informações do comando
-		// Ex: "1) /help - Exibir lista de comandos disponíveis"
-		// TODO: quando conseguir ordenas os comandos, remover o índice das informações
-		// retornadas
-		return String.format("%o) %s - %s", this.indice, this.comando, this.descricao);
+		// Ex: "/help - Exibir lista de comandos disponíveis"
+		return String.format("%s - %s", this.comando, this.descricao);
 	}
 	
 	public String getComandoPai() {

@@ -18,16 +18,16 @@ public class BugBot {
 	// pendentes
 	private int idMensagemJaLida;
 
-	public BugBot(String token) {
+	public BugBot(String tokenTelegramBot, String apiKeyMovies) {
 		// Adicionando informações de acesso ao bot
-		bot = new TelegramBot(token);
-
+		bot = new TelegramBot(tokenTelegramBot);
+		
 		// Inicializando o id da última mensagem lida como zero, para que ao iniciar a
 		// conversa todas as mensagens sejam consideradas
 		idMensagemJaLida = 0;
 
 		// Define quais são os comandos disponíveis no bot
-		GerenciadorComandosBot.inicializar();
+		GerenciadorComandosBot.inicializar(apiKeyMovies);
 	}
 
 	public void atualizar() {
@@ -88,7 +88,7 @@ public class BugBot {
 		
 		
 		// Retorna a resposta que será enviada na conversa
-		String listaRespostas = "8 - " + retornarRespostas(mensagem);
+		String listaRespostas = "" + retornarRespostas(mensagem);
 
 		// Envia resposta
 		boolean enviou = bot.execute(new SendMessage(chatId, listaRespostas)).isOk();
@@ -107,7 +107,7 @@ public class BugBot {
 			// Responde saudação
 			sbRespostas.append(retornarRespostaSaudacao());
 			// E informa quais são os comandos disponíveis
-			sbRespostas.append("\n /help");
+			sbRespostas.append("\n\n" + GerenciadorComandosBot.retornarStrListaComandos());
 			return sbRespostas.toString();
 		}
 
@@ -120,17 +120,17 @@ public class BugBot {
 			// Exibe 'Não entendi...'
 			sbRespostas.append("Não entendi...");
 			// E informa quais são os comandos disponíveis
-			sbRespostas.append("\n /help");
+			sbRespostas.append("\n\n" + GerenciadorComandosBot.retornarStrListaComandos());
 			return sbRespostas.toString();
 		}
 
 		sbRespostas.append(respostaComando);
 		
-		if(!mensagem.equals("/help")) {
-			sbRespostas.append("\n /help");
+		if(GerenciadorComandosBot.verificarSeComandoAlterouPilha(mensagem)) {
+			sbRespostas.append("\n\n" + GerenciadorComandosBot.retornarStrListaComandos());
 		}
 		
-		return respostaComando;
+		return sbRespostas.toString();
 	}
 
 	// Método que identifica se a mensagem recebida é uma saudação
