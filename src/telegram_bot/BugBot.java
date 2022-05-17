@@ -1,5 +1,6 @@
 package telegram_bot;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.pengrad.telegrambot.TelegramBot;
@@ -21,7 +22,7 @@ public class BugBot {
 	public BugBot(String tokenTelegramBot, String apiKeyMovies) {
 		// Adicionando informações de acesso ao bot
 		bot = new TelegramBot(tokenTelegramBot);
-		
+
 		// Inicializando o id da última mensagem lida como zero, para que ao iniciar a
 		// conversa todas as mensagens sejam consideradas
 		idMensagemJaLida = 0;
@@ -65,7 +66,7 @@ public class BugBot {
 		Console.printarMensagemRecebida(strMensagem);
 
 		// Envia 'Digitando...' antes de enviar a resposta
-		 enviarAvisoDigitando(chatId);
+		enviarAvisoDigitando(chatId);
 
 		// Envia a resposta
 		responderMensagem(chatId, strMensagem);
@@ -81,14 +82,13 @@ public class BugBot {
 	}
 
 	private void responderMensagem(Long chatId, String mensagem) {
-		if(mensagem.equals("/sair")) {
+		if (mensagem.equals("/sair")) {
 			bot.shutdown();
 			return;
 		}
-		
-		
+
 		// Retorna a resposta que será enviada na conversa
-		String listaRespostas = "" + retornarRespostas(mensagem);
+		String listaRespostas = retornarRespostas(mensagem);
 
 		// Envia resposta
 		boolean enviou = bot.execute(new SendMessage(chatId, listaRespostas)).isOk();
@@ -111,12 +111,9 @@ public class BugBot {
 			return sbRespostas.toString();
 		}
 
-		// Tenta encontrar uma função com este comando
-		String respostaComando = GerenciadorComandosBot.tentarExecutarFuncao(mensagem);
+		List<String> listaComandosRecebidos = retornarListaComandosRecebidos(mensagem);
 
-		// Caso não encontre uma função
-		// disponíveis.
-		if (respostaComando == null) {
+		if (listaComandosRecebidos == null) {
 			// Exibe 'Não entendi...'
 			sbRespostas.append("Não entendi...");
 			// E informa quais são os comandos disponíveis
@@ -124,13 +121,73 @@ public class BugBot {
 			return sbRespostas.toString();
 		}
 
-		sbRespostas.append(respostaComando);
-		
-		if(GerenciadorComandosBot.verificarSeComandoAlterouPilha(mensagem)) {
+		for (String comandoRecebido : listaComandosRecebidos) {
+			int indicePrimeiroSeparador = comandoRecebido.indexOf(";");
+			if (indicePrimeiroSeparador == -1) {
+				return GerenciadorComandosBot.tentarExecutarFuncao(comandoRecebido, null);
+			} 
+			else {
+				String comando = comandoRecebido.substring(0, indicePrimeiroSeparador);
+				String strParametros = comandoRecebido.substring(indicePrimeiroSeparador + 1);
+				sbRespostas.append(GerenciadorComandosBot.tentarExecutarFuncao(comando, strParametros));
+			}
+		}
+
+		if (GerenciadorComandosBot.verificarSeComandoAlterouPilha(mensagem)) {
 			sbRespostas.append("\n\n" + GerenciadorComandosBot.retornarStrListaComandos());
 		}
-		
+
 		return sbRespostas.toString();
+	}
+
+	private List<String> retornarListaComandosRecebidos(String mensagem) {
+		int contadorAspas = 0;
+		StringBuilder sbTrecho = new StringBuilder("");
+		List<String> listaTrechos = new ArrayList<String>();
+
+		for (char caracter : mensagem.toCharArray()) {
+			switch (caracter) {
+			// aspas
+			case '"':
+				contadorAspas++;
+				break;
+
+			// espaço
+			case ' ':
+				if (contadorAspas % 2 == 0) {
+					listaTrechos.add(sbTrecho.toString());
+					sbTrecho = new StringBuilder("");
+				} else {
+					sbTrecho.append(caracter);
+				}
+				break;
+
+			// demais caracteres
+			default:
+				sbTrecho.append(caracter);
+			}
+		}
+
+		StringBuilder sbComandoComParametro = new StringBuilder("");
+		List<String> listaComandosComParametros = new ArrayList<String>();
+
+		for (String trecho : listaTrechos) {
+			trecho = trecho.replace(";", "");
+			if (GerenciadorComandosBot.verificarSeComandoExiste(trecho)) {
+				if (sbComandoComParametro != null) {
+					listaComandosComParametros.add(sbComandoComParametro.toString());
+				}
+				sbComandoComParametro = new StringBuilder(trecho);
+			} else {
+				if (sbComandoComParametro == null) {
+					return null;
+				}
+				sbComandoComParametro.append(";");
+				sbComandoComParametro.append(trecho);
+			}
+		}
+
+		return listaComandosComParametros;
 	}
 
 	// Método que identifica se a mensagem recebida é uma saudação
