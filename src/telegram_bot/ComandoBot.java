@@ -66,6 +66,6 @@ public class ComandoBot implements Comparable<ComandoBot> {
 		Zero 		--> ambas as instâncias possuem o mesmo índice
 		Negativo 	--> a outra instância possue maior índice
 		*/
-		return this.indice - outraInstancia.getIndice();
+		return - this.indice + outraInstancia.getIndice();/* invertido temporariamente*/
 	}
 }

@@ -11,6 +11,7 @@ public class GerenciadorComandosBot {
 
 	private static List<ComandoBot> listaTodosComandos;
 	private static Stack<String> pilhaComandosPai;
+	private static String helpAnterior = null;
 
 	private static MoviesApi moviesApi;
 
@@ -22,20 +23,29 @@ public class GerenciadorComandosBot {
 		listaTodosComandos = new ArrayList<ComandoBot>();
 
 		// Primeiro comando da lista, totalmente independente (pode ser executado a qualquer momento)
-		listaTodosComandos.add(new ComandoBot("/help", "Exibir lista de comandos disponíveis", fHelp()));
+		adicionarComando(new ComandoBot("/help", "Exibir lista de comandos disponíveis", fHelp()));
 		
 		// Adiciona comandos básicos
-		listaTodosComandos.addAll((new ComandosBasicos()).retornarListaComandos(comandoPai));
+		adicionarComando((new ComandosBasicos()).retornarListaComandos(comandoPai));
 		
 		// Adiciona comandos específicos de cada API
-		listaTodosComandos.addAll(moviesApi.retornarListaComandos(comandoPai));
-
-		// Último comando da lista, totalmente independente (pode ser executado a qualquer momento)
-		listaTodosComandos.add(new ComandoBot("/voltar", "Retornar para o comando anterior", fVoltar()));
+		adicionarComando(moviesApi.retornarListaComandos(comandoPai));
+		
+		// Últimos comandos da lista, totalmente independente (pode ser executado a qualquer momento)
+		adicionarComando(new ComandoBot("/voltar", "Retornar para o comando anterior", fVoltar()));
+		adicionarComando(new ComandoBot("/inicio", "Retornar para o comando início", fInicio()));
 		
 		// Instancia a pilha de comandos pai
 		pilhaComandosPai = new Stack<String>();
 		pilhaComandosPai.add(comandoPai);
+	}
+	
+	public static String getHelp() {
+		if(helpAnterior == null) {
+			return retornarStrListaComandos();
+		}
+		
+		return helpAnterior;
 	}
 
 	static String getComandoPaiAtual() {
@@ -59,14 +69,30 @@ public class GerenciadorComandosBot {
 		pilhaComandosPai.add("/inicio");
 	}
 
-	public static void printarStrPilha() {
-		Console.printarComentario(pilhaComandosPai.toString());
+	public static String retornarStrPilha() {
+		StringBuilder sbPilha = new StringBuilder("");
+		
+		return pilhaComandosPai.stream().reduce("", (acc, item) -> {
+			return String.format("%s > %s", acc, item);
+		});
 	}
 
 	public static boolean verificarSeComandoAlterouPilha(String comando) {
 		return comando.equals("/voltar") || getComandoPaiAtual().equals(comando);
 	}
 
+	public static void adicionarComando(List<ComandoBot> listaComandoBot) {
+		for(int i=0; i<listaComandoBot.size();i++) {
+			adicionarComando(listaComandoBot.get(i));
+		}
+	}
+
+	public static void adicionarComando(ComandoBot comandoBot) {
+		// Antes de adicionar, remove qualquer comando que tenha este nome, para evitar duplicidades
+		listaTodosComandos.removeIf(c -> c.getComando().equals(comandoBot.getComando()));
+		listaTodosComandos.add(comandoBot);
+	}
+	
 	public static String tentarExecutarFuncao(String comando, String parametros) {
 		// Caso não exista
 		if (!verificarSeComandoExiste(comando)) {
@@ -112,6 +138,10 @@ public class GerenciadorComandosBot {
 	}
 
 	public static String retornarStrListaComandos() {
+		return retornarStrListaComandos("");
+	}
+
+	public static String retornarStrListaComandos(String conteudoResposta) {
 		// Retorna array de comandos disponíveis
 		List<ComandoBot> listaComandosFilhos = retornarListaComandosFilhos(null);
 
@@ -120,22 +150,35 @@ public class GerenciadorComandosBot {
 			return "Nenhum comando encontrado";
 		}
 
+		String breadcrumb = String.format("Você está em: \n%s", retornarStrPilha());
+		
 		// Inicializa um buffer de strings, para concatenar os comandos disponíveis
-		StringBuilder stringBuilderComandos = new StringBuilder("Comandos disponíveis:");
+		StringBuilder stringBuilderComandos = new StringBuilder(breadcrumb);
+		stringBuilderComandos.append("\n\nComandos disponíveis:");
 
 		// Adiciona cada um dos comandos no buffer de strings
 		for (ComandoBot comandoBot : listaComandosFilhos) {
 			stringBuilderComandos.append("\n");
 			stringBuilderComandos.append(comandoBot.getInfo());
+			
+			if(comandoBot.getComando().equals("/inicio") && !conteudoResposta.isEmpty()) {
+				stringBuilderComandos.append("\n");
+				stringBuilderComandos.append("\n");
+				stringBuilderComandos.append(conteudoResposta);
+			}
 		}
+		
+		helpAnterior = stringBuilderComandos.toString();
 
 		// Retorna string resultante do buffer
-		return stringBuilderComandos.toString();
+		return helpAnterior;
 	}
 	
 	private static Function<String, String> fHelp() {
 		// Retorna a lista de comandos disponíveis
-		return parametro -> GerenciadorComandosBot.retornarStrListaComandos();
+		return parametro -> {
+			return getHelp();
+		};
 	}
 
 	private static Function<String, String> fVoltar() {
@@ -145,6 +188,7 @@ public class GerenciadorComandosBot {
 			String comandoPaiAtual = GerenciadorComandosBot.getComandoPaiAtual();
 
 			if (comandoPaiAnterior == comandoPaiAtual) {
+				GerenciadorComandosBot.adicionarComandoNaPilha("/inicio");
 				return "Você já se encontra no comando inicial";
 			}
 
@@ -152,4 +196,10 @@ public class GerenciadorComandosBot {
 		};
 	}
 	
+	private static Function<String, String> fInicio() {
+		return parametro -> {
+			GerenciadorComandosBot.voltarAoComandoInicialDaPilha();
+			return "Você retornou para o comando inicial";
+		};
+	}
 }

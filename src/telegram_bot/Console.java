@@ -5,33 +5,59 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Console {
-	// Armazena a última data que foi exibida, para que não seja exibida novamente caso seja a mesma
+	// Armazena a última data que foi exibida, para que não seja exibida novamente
+	// caso seja a mesma
 	private static String strUltimaDataExibida = "";
-	// Armazena a última hora que foi exibida, para que não seja exibida novamente caso seja a mesma (e seja a mesma data)
+	// Armazena a última hora que foi exibida, para que não seja exibida novamente
+	// caso seja a mesma (e seja a mesma data)
 	private static String strUltimaHoraExibida = "";
 
+	private static boolean habilitarExibicaoComentario = true;
+	private static boolean habilitarExibicaoMensagemEnviada = true;
+	private static boolean habilitarExibicaoMensagemRecebida = true;
+	private static boolean habilitarExibicaoErro = true;
+
 	public static void printarMensagemEnviada(String mensagem) {
-		printarDataHoraAtual();
-		// Exibe no console a mensagem enviada
-		System.out.println(String.format("--> (enviado)\n%s", mensagem));
+		if (habilitarExibicaoMensagemEnviada) {
+			printarDataHoraAtual();
+			// Exibe no console a mensagem enviada
+			System.out.println(String.format("--> (enviado)\n%s", mensagem));
+		}
 	}
 
 	public static void printarErroAoEnviarMensagem(String mensagem) {
-		printarDataHoraAtual();
-		// Informa erro no console ao enviar a mensagem
-		System.out.println(String.format("--> Erro ao enviar \n%s", mensagem));
+		if (habilitarExibicaoErro) {
+			printarDataHoraAtual();
+			// Informa erro no console ao enviar a mensagem
+			System.out.println(String.format("--> Erro ao enviar \n%s", mensagem));
+		}
 	}
 
 	public static void printarMensagemRecebida(String mensagem) {
-		printarDataHoraAtual();
-		// Exibe no console a mensagem recebida
-		System.out.println(String.format("<-- (recebido)\n%s", mensagem));
+		if (habilitarExibicaoMensagemRecebida) {
+			printarDataHoraAtual();
+			// Exibe no console a mensagem recebida
+			System.out.println(String.format("<-- (recebido)\n%s", mensagem));
+		}
 	}
 
 	public static void printarComentario(String mensagem) {
-		printarDataHoraAtual();
-		// Exibe no console qualquer informação adicional
-		System.out.println(String.format("/// %s", mensagem));
+		printarComentario(mensagem, false);
+	}
+
+	public static void printarComentario(String mensagem, boolean forcarExibicao ) {
+		if (habilitarExibicaoComentario || forcarExibicao) {
+			printarDataHoraAtual();
+			// Exibe no console qualquer informação adicional
+			System.out.println(String.format("/// %s", mensagem));
+		}
+	}
+
+	public static void habilitarExibicao(boolean comentario, boolean mensagemEnviada, boolean mensagemRecebida, boolean erro) {
+		habilitarExibicaoComentario = comentario;
+		habilitarExibicaoMensagemEnviada = mensagemEnviada;
+		habilitarExibicaoMensagemRecebida = mensagemRecebida;
+		habilitarExibicaoErro = erro;
 	}
 	
 	private static void printarDataHoraAtual() {
@@ -72,8 +98,8 @@ public class Console {
 			strUltimaHoraExibida = strHoraAtual;
 		}
 	}
-	
-	public static String retornarDataHoraAtual(String strPattern){
+
+	public static String retornarDataHoraAtual(String strPattern) {
 		// Retorna a data e hora atual
 		LocalDateTime horaAtual = LocalDateTime.now();
 		// Define o formato de acordo com o parâmetro

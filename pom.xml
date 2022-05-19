@@ -7,6 +7,14 @@
 	<artifactId>telegram_bot</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	
+	<dependencies>
+		<dependency>
+		  <groupId>com.github.pengrad</groupId>
+		  <artifactId>java-telegram-bot-api</artifactId>
+		  <version>6.0.1</version>
+		</dependency>
+	</dependencies>
+	
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<plugins>
@@ -20,13 +28,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
-	<dependencies>
-		<dependency>
-		  <groupId>com.github.pengrad</groupId>
-		  <artifactId>java-telegram-bot-api</artifactId>
-		  <version>6.0.1</version>
-		</dependency>
-	</dependencies>
 	
 </project>

@@ -18,6 +18,14 @@ public class Main {
 	 */
 	
 	public static void main(String[] args) throws IOException {
+		
+		//Definindo quais tipos de logs devem ser habilitados:
+		boolean comentario = false;
+		boolean mensagemEnviada = false;
+		boolean mensagemRecebida = false;
+		boolean erro = false;
+		Console.habilitarExibicao(comentario, mensagemEnviada, mensagemRecebida, erro);
+		
 		// Configurando acesso ao arquivo de variáveis globais
 		Properties prop = new Properties();
 		FileInputStream ip = new FileInputStream("config.properties");
@@ -35,34 +43,3 @@ public class Main {
 		}
 	}
 }
-
-
-/*
-
-Anotações:
-
-OK - Armazenar funções principais numa classe separada (ComandosBasicos.java)
-OK - Armazenar funções relacionadas a uma API dentro da classe que acessa a API.
-- Possibilitar execução de múltiplos comandos em série 
-Ex: "/alfanumericos /numeros /..."
-- Permitir inclusão de parâmetros:
-Ex: "/buscarfilmes game"
-Ex: "/buscarfilmes 'toy st'"
-// Caso não seja saudação
-// Roda em cada caracter da mensagem e vai concatenando em um comando aux.
-// Ao encontrar um " ", adiciona comando na lista e limpa o comando aux.
-// Caso o numero de aspas encontradas ate o caracter seja ímpar, não quebra o comando no " ", pois o caracter esta dentro de um par de aspas.
-
-// Configurar para funcionar com /x  sendo x o numero do comando na lista de comandos disponíveis, iniciando em zero.
-
-Ao buscar comando
-String comandoSemBarra = comando.substring(1);
-if(comandoSemBarra.isnumeric()){
-    int numComando = (int) comandoSemBarra;
-    List<ComandoBot> listaComandosFilhos = retornarListaComandosFilhos();
-    if(numComando < listaComandosFilhos.size()){
-        listaComandosFilhos.get(numComando).executarFuncao(parametros...);
-    }
-}
-
-*/

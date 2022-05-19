@@ -60,7 +60,7 @@ public class BugBot {
 		}
 
 		Long chatId = mensagem.message().chat().id();
-		String strMensagem = mensagem.message().text();
+		String strMensagem = mensagem.message().text().trim();
 
 		// Exibe no console a mensagem recebida
 		Console.printarMensagemRecebida(strMensagem);
@@ -82,14 +82,9 @@ public class BugBot {
 	}
 
 	private void responderMensagem(Long chatId, String mensagem) {
-		if (mensagem.equals("/sair")) {
-			bot.shutdown();
-			return;
-		}
-
 		// Retorna a resposta que será enviada na conversa
 		String listaRespostas = retornarRespostas(mensagem);
-
+		
 		// Envia resposta
 		boolean enviou = bot.execute(new SendMessage(chatId, listaRespostas)).isOk();
 
@@ -107,24 +102,24 @@ public class BugBot {
 			// Responde saudação
 			sbRespostas.append(retornarRespostaSaudacao());
 			// E informa quais são os comandos disponíveis
-			sbRespostas.append("\n\n" + GerenciadorComandosBot.retornarStrListaComandos());
+			sbRespostas.append("\n\n" + GerenciadorComandosBot.getHelp());
 			return sbRespostas.toString();
 		}
 
 		List<String> listaComandosRecebidos = retornarListaComandosRecebidos(mensagem);
 
-		if (listaComandosRecebidos == null) {
+		if (listaComandosRecebidos == null || listaComandosRecebidos.isEmpty()) {
 			// Exibe 'Não entendi...'
 			sbRespostas.append("Não entendi...");
 			// E informa quais são os comandos disponíveis
-			sbRespostas.append("\n\n" + GerenciadorComandosBot.retornarStrListaComandos());
+			sbRespostas.append("\n\n" + GerenciadorComandosBot.getHelp());
 			return sbRespostas.toString();
 		}
 
 		for (String comandoRecebido : listaComandosRecebidos) {
 			int indicePrimeiroSeparador = comandoRecebido.indexOf(";");
 			if (indicePrimeiroSeparador == -1) {
-				return GerenciadorComandosBot.tentarExecutarFuncao(comandoRecebido, null);
+				sbRespostas.append(GerenciadorComandosBot.tentarExecutarFuncao(comandoRecebido, null));
 			} 
 			else {
 				String comando = comandoRecebido.substring(0, indicePrimeiroSeparador);
@@ -133,8 +128,14 @@ public class BugBot {
 			}
 		}
 
-		if (GerenciadorComandosBot.verificarSeComandoAlterouPilha(mensagem)) {
-			sbRespostas.append("\n\n" + GerenciadorComandosBot.retornarStrListaComandos());
+		String comandoSemParametros = mensagem;
+		int indicePrimeiroEspaco = mensagem.indexOf(" ");
+		if (indicePrimeiroEspaco != -1) {
+			comandoSemParametros = comandoSemParametros.substring(0, indicePrimeiroEspaco);
+		} 
+		
+		if (GerenciadorComandosBot.verificarSeComandoAlterouPilha(comandoSemParametros)) {
+			return GerenciadorComandosBot.retornarStrListaComandos(sbRespostas.toString());
 		}
 
 		return sbRespostas.toString();
@@ -149,6 +150,7 @@ public class BugBot {
 			switch (caracter) {
 			// aspas
 			case '"':
+			case '\'':
 				contadorAspas++;
 				break;
 
@@ -167,26 +169,45 @@ public class BugBot {
 				sbTrecho.append(caracter);
 			}
 		}
-
+		
+		// Ultimo deve ser adicionado separadamente, 
+		// pois o que acabou adicionando os outros é o fato de que eles não eram o ultimo
+		if(sbTrecho.toString().length() > 0){
+			listaTrechos.add(sbTrecho.toString());
+		}
+		
 		StringBuilder sbComandoComParametro = new StringBuilder("");
 		List<String> listaComandosComParametros = new ArrayList<String>();
-
+		
 		for (String trecho : listaTrechos) {
 			trecho = trecho.replace(";", "");
-			if (GerenciadorComandosBot.verificarSeComandoExiste(trecho)) {
-				if (sbComandoComParametro != null) {
+			
+			if(GerenciadorComandosBot.verificarSeComandoExiste(trecho)) {
+				
+				if (sbComandoComParametro.toString().length() > 0) {
 					listaComandosComParametros.add(sbComandoComParametro.toString());
 				}
+				
 				sbComandoComParametro = new StringBuilder(trecho);
-			} else {
-				if (sbComandoComParametro == null) {
+				
+			}
+			else {
+				if(sbComandoComParametro.toString().isEmpty()) {
 					return null;
 				}
+
 				sbComandoComParametro.append(";");
 				sbComandoComParametro.append(trecho);
 			}
+			
 		}
-
+		
+		// Ultimo deve ser adicionado separadamente, 
+		// pois o que acabou adicionando os outros é o fato de que eles não eram o ultimo
+		if(sbComandoComParametro.toString().length() > 0){
+			listaComandosComParametros.add(sbComandoComParametro.toString());
+		}
+		
 		return listaComandosComParametros;
 	}
 

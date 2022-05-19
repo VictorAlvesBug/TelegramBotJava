@@ -10,26 +10,26 @@ public class ComandosBasicos {
 		List<ComandoBot> listaComandos = new ArrayList<ComandoBot>();
 
 		listaComandos
-				.add(new ComandoBot("/nomedev", "Exibir o nome do desenvolvedor do bot", fNomeDev(), comandoPai));
-		listaComandos.add(new ComandoBot("/dataatual", "Informa a última data de atualização do bot", fDataAtual(),
+				.add(new ComandoBot("/nomeDev", "Exibir o nome do desenvolvedor do bot", fNomeDev(), comandoPai));
+		listaComandos.add(new ComandoBot("/dataAtual", "Informa a última data de atualização do bot", fDataAtual(),
 				comandoPai));
 		listaComandos.add(new ComandoBot("/alfanumericos", "Grupo alfanumericos", fAlfanumericos(), comandoPai));
 		listaComandos.add(new ComandoBot("/letras", "Grupo letras", fLetras(), "/alfanumericos"));
 		listaComandos.add(
-				new ComandoBot("/letrasmaiusculas", "Grupo letrasmaiusculas", fLetrasMaiusculas(), "/letras"));
+				new ComandoBot("/letrasMaiusculas", "Grupo letrasmaiusculas", fLetrasMaiusculas(), "/letras"));
 		listaComandos.add(
-				new ComandoBot("/letrasminusculas", "Grupo letrasminusculas", fLetrasMinusculas(), "/letras"));
+				new ComandoBot("/letrasMinusculas", "Grupo letrasminusculas", fLetrasMinusculas(), "/letras"));
 		listaComandos.add(new ComandoBot("/numeros", "Grupo numeros", fNumeros(), "/alfanumericos"));
-		listaComandos.add(new ComandoBot("/numerospares", "Grupo numerospares", fNumerosPares(), "/numeros"));
+		listaComandos.add(new ComandoBot("/numerosPares", "Grupo numerospares", fNumerosPares(), "/numeros"));
 		listaComandos
-				.add(new ComandoBot("/numerosimpares", "Grupo numerosimpares", fNumerosImpares(), "/numeros"));
+				.add(new ComandoBot("/numerosImpares", "Grupo numerosimpares", fNumerosImpares(), "/numeros"));
 		
 		return listaComandos;
 	}
 
 	private static Function<String, String> fNomeDev() {
 		// Retorna o nome do criador do chatbot
-		return parametro -> String.format("Chatbot criado por Victor Alves Bugueno (Parâmetro: '%s')", parametro);
+		return parametro -> "Chatbot criado por Victor Alves Bugueno";
 	}
 
 	private static Function<String, String> fDataAtual() {
@@ -53,15 +53,15 @@ public class ComandosBasicos {
 
 	private static Function<String, String> fLetrasMaiusculas() {
 		return parametro -> {
-			GerenciadorComandosBot.adicionarComandoNaPilha("/letrasmaiusculas");
-			return "Você selecionou o grupo 'letrasmaiusculas'";
+			GerenciadorComandosBot.adicionarComandoNaPilha("/letrasMaiusculas");
+			return "Você selecionou o grupo 'letrasMaiusculas'";
 		};
 	}
 
 	private static Function<String, String> fLetrasMinusculas() {
 		return parametro -> {
-			GerenciadorComandosBot.adicionarComandoNaPilha("/letrasminusculas");
-			return "Você selecionou o grupo 'letrasminusculas'";
+			GerenciadorComandosBot.adicionarComandoNaPilha("/letrasMinusculas");
+			return "Você selecionou o grupo 'letrasMinusculas'";
 		};
 	}
 
@@ -74,15 +74,15 @@ public class ComandosBasicos {
 
 	private static Function<String, String> fNumerosPares() {
 		return parametro -> {
-			GerenciadorComandosBot.adicionarComandoNaPilha("/numerospares");
-			return "Você selecionou o grupo 'numerospares'";
+			GerenciadorComandosBot.adicionarComandoNaPilha("/numerosPares");
+			return "Você selecionou o grupo 'numerosPares'";
 		};
 	}
 
 	private static Function<String, String> fNumerosImpares() {
 		return parametro -> {
-			GerenciadorComandosBot.adicionarComandoNaPilha("/numerosimpares");
-			return "Você selecionou o grupo 'numerosimpares'";
+			GerenciadorComandosBot.adicionarComandoNaPilha("/numerosImpares");
+			return "Você selecionou o grupo 'numerosImpares'";
 		};
 	}
 }
