@@ -9,7 +9,6 @@ public class DetalhesFilmeModel {
 	private int seriesEndYear;
 	private String title;
 	private int year;
-	private SinopseFilmeModel sinopse;
 	
 	public String getId() {
 		return id;
@@ -41,13 +40,5 @@ public class DetalhesFilmeModel {
 	
 	public int getYear() {
 		return year;
-	}
-	
-	public void setSinopse(SinopseFilmeModel sinopse) {
-		this.sinopse = sinopse;
-	}
-	
-	public SinopseFilmeModel getSinopse() {
-		return sinopse;
 	}
 }

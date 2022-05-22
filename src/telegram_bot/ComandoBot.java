@@ -1,29 +1,21 @@
 package telegram_bot;
 
-import java.util.function.Function;
-
-public class ComandoBot implements Comparable<ComandoBot> {
-
-	private int indice;
-	private static int maxIndice = 0;
+public class ComandoBot {
 	
 	private String comando;
 	private String descricao;
-	private Function<String, String> funcao;
+	private IFuncao funcao;
 	
 	private String comandoPai;
+	
+	private Object objInformacoesAdicionais;
 
-	public ComandoBot(String comando, String descricao, Function<String, String> funcao) {
+	public ComandoBot(String comando, String descricao, IFuncao funcao) {
 		// Quando um comando não possui um comando pai (nem mesmo o /inicio) ele é um comando que pode ser executado a qualquer momento
 		this(comando, descricao, funcao, null);
 	}
 
-	public ComandoBot(String comando, String descricao, Function<String, String> funcao, String comandoPai) {
-		// Incrimenta um no índice máximo
-		maxIndice++;
-		// Atribui valor ao indice do objeto atual
-		this.indice = maxIndice;
-
+	public ComandoBot(String comando, String descricao, IFuncao funcao, String comandoPai) {
 		// Armazena demais atributos informados pelos parâmetros
 		this.comando = comando;
 		this.descricao = descricao;
@@ -31,13 +23,9 @@ public class ComandoBot implements Comparable<ComandoBot> {
 		
 		/*
 		comandoPai = null --> comando pode ser executado a qualquer momento
-		comandoPai = {não nulo} --> comando só pode ser executado quando estiver neste ponto da conversa
+		comandoPai = {não nulo} --> comando só pode ser executado quando estiver neste contexto
 		*/
 		this.comandoPai = comandoPai;
-	}
-
-	public int getIndice() {
-		return this.indice;
 	}
 
 	public String getComando() {
@@ -56,16 +44,14 @@ public class ComandoBot implements Comparable<ComandoBot> {
 
 	public String executarFuncao(String parametro) {
 		// Executa função atribuída a este comando
-		return this.funcao.apply(parametro);
+		if(parametro == null)
+		{
+			return this.funcao.executar(objInformacoesAdicionais);
+		}
+		return this.funcao.executar(parametro);
 	}
-
-	@Override
-	public int compareTo(ComandoBot outraInstancia) {
-		/*
-		Positivo 	--> a instância atual possue maior índice
-		Zero 		--> ambas as instâncias possuem o mesmo índice
-		Negativo 	--> a outra instância possue maior índice
-		*/
-		return - this.indice + outraInstancia.getIndice();/* invertido temporariamente*/
+	
+	public void setObjInformacoesAdicionais(Object obj) {
+		objInformacoesAdicionais = obj;
 	}
 }

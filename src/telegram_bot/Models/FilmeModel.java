@@ -1,6 +1,7 @@
 package telegram_bot.Models;
 
 public class FilmeModel {
+	private String comando;
 	private Object i;
 	private String id;
 	private String l;
@@ -8,6 +9,10 @@ public class FilmeModel {
 	private int rank;
 	private String s;
 	private int y;
+	
+	public String getComando() {
+		return comando;
+	}
 	
 	public Object getI() {
 		return i;
