@@ -18,9 +18,11 @@ public class BugBot {
 	// Armazena o id da última mensagem lida, para fazer offset ao ler as mensagens
 	// pendentes
 	private int idMensagemJaLida;
+	
+	private GerenciadorComandosBot gerenciadorComandos;
 
 	// Construtor recebe as chaves de acesso via parâmetro
-	public BugBot(String tokenTelegramBot, String apiKeyMovies) {
+	public BugBot(String tokenTelegramBot, String apiKeyMovies) throws Exception {
 
 		// Caso não seja informado o token, lança exceção
 		if(tokenTelegramBot == null || tokenTelegramBot.isEmpty())
@@ -36,7 +38,7 @@ public class BugBot {
 		idMensagemJaLida = 0;
 
 		// Define quais são os comandos disponíveis no bot
-		GerenciadorComandosBot.getInstancia(apiKeyMovies);
+		gerenciadorComandos = new GerenciadorComandosBot(apiKeyMovies);
 	}
 
 	// Método executado em loop, para verificar se há alguma mensagem recebida do usuário
@@ -128,7 +130,7 @@ public class BugBot {
 			// Exibe "Não entendi..."
 			sbRespostas.append("Não entendi...");
 			// E informa quais são os comandos disponíveis
-			sbRespostas.append("\n\n" + GerenciadorComandosBot.getInstancia().getHelp());
+			sbRespostas.append("\n\n" + gerenciadorComandos.getHelp());
 			return sbRespostas.toString();
 		}
 
@@ -139,13 +141,14 @@ public class BugBot {
 			// Caso não encontre o primeiro separador, a variável armazenará -1.
 			// Desta forma, o comando é chamado sem parâmetros
 			if (indicePrimeiroSeparador == -1) {
-				sbRespostas.append(GerenciadorComandosBot.getInstancia().tentarExecutarFuncao(comandoRecebido, null));
+				sbRespostas.append(gerenciadorComandos.tentarExecutarFuncao(comandoRecebido, null));
 			} 
 			else {
 				// Caso o primeiro separador exista, separa o primeiro trecho (comando) do resto (parâmetros)
 				String comando = comandoRecebido.substring(0, indicePrimeiroSeparador);
 				String strParametros = comandoRecebido.substring(indicePrimeiroSeparador + 1);
-				sbRespostas.append(GerenciadorComandosBot.getInstancia().tentarExecutarFuncao(comando, strParametros));
+				sbRespostas.append(gerenciadorComandos.tentarExecutarFuncao(comando, strParametros));
+
 			}
 		}
 		
@@ -164,7 +167,7 @@ public class BugBot {
 			
 			// Caso o comando sem parâmetro seja o "/inicio" ou seja o comando pai mais próximo na pilha,
 			// é entendido que a execução do comando alterou a pilha. 
-			if (GerenciadorComandosBot.getInstancia().verificarSeComandoAlterouPilha(comandoSemParametros)) {
+			if (gerenciadorComandos.verificarSeComandoAlterouPilha(comandoSemParametros)) {
 				algumComandoAlterouPilha = true;
 				// Nem precisa continuar procurando, pois o comando atual já sinalizou que alterou a pilha
 			}
@@ -173,7 +176,7 @@ public class BugBot {
 		// Caso tenha algum comando que tenha alterado a pilha, a lista de comandos possíveis,
 		// deve ter sido alterada, então exibe a lista de comandos atualizada.
 		if (algumComandoAlterouPilha) {
-			return GerenciadorComandosBot.getInstancia().retornarStrListaComandos(sbRespostas.toString());
+			return gerenciadorComandos.retornarStrListaComandos(sbRespostas.toString());
 		}
 
 		return sbRespostas.toString();
@@ -273,7 +276,7 @@ public class BugBot {
 			trecho = trecho.replace(";", "");
 			
 			// Verifica se o trecho é reconhecido como um comando válido
-			if(GerenciadorComandosBot.getInstancia().verificarSeComandoExiste(trecho)) {
+			if(gerenciadorComandos.verificarSeComandoExiste(trecho)) {
 				
 				// Caso tenha algo concatenado no comandoComParametro, adiciona este "algo" na lista
 				// Este "algo" pode ser um comando simples ou um comando com parâmetros.

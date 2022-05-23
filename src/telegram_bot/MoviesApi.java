@@ -109,7 +109,7 @@ public class MoviesApi {
 	}
 
 	// Acrescenta os comandos referentes a API de filmes na lista de comandos disponíveis no contexto raiz
-	public List<ComandoBot> retornarListaComandos(String comandoPai) {
+	public List<ComandoBot> retornarListaComandos(String comandoPai, GerenciadorComandosBot gerenciadorComandos) {
 
 		// Instancia a lista de comandos
 		List<ComandoBot> listaComandos = new ArrayList<ComandoBot>();
@@ -118,12 +118,10 @@ public class MoviesApi {
 		IFuncao fDetalhesFilme = objFilme -> {
 			FilmeModel filme = FilmeModel.class.cast(objFilme);
 
-			GerenciadorComandosBot.getInstancia().adicionarComandoNaPilha(filme.getComando());
-
 			StringBuilder sbInfoFilme = new StringBuilder("");
 
 			sbInfoFilme.append(String.format("Top #%o", filme.getRank()));
-			sbInfoFilme.append(String.format("\n%s (%o)", filme.getNome(), filme.getAnoLancamento()));
+			sbInfoFilme.append(String.format("\n%s", filme.getNome()));
 			sbInfoFilme.append(String.format("\nCategoria: %s", filme.getCategoria()));
 			sbInfoFilme.append(String.format("\nAtores Principais: %s", filme.getAtoresPrincipais()));
 
@@ -134,7 +132,7 @@ public class MoviesApi {
 		listaComandos.add(new ComandoBot("/buscarFilme", "Buscar filme", termo -> {
 			String strTermo = (String) termo;
 			if (strTermo == null || strTermo.isEmpty()) {
-				return "Para buscar por um filme, utilize o seguinte formato de busca:\n/buscarfilme \"Nome do Filme\"";
+				return "Para buscar por um filme, utilize o seguinte formato de busca:\n/buscarFilme \"Nome do Filme\"";
 			}
 
 			try {
@@ -150,10 +148,10 @@ public class MoviesApi {
 
 					ComandoBot comandoBot = new ComandoBot(comando, filme.getNome(), fDetalhesFilme, "/buscarFilme");
 					comandoBot.setObjInformacoesAdicionais(filme);
-					GerenciadorComandosBot.getInstancia().adicionarComando(comandoBot);
+					gerenciadorComandos.adicionarComando(comandoBot);
 				}
 
-				GerenciadorComandosBot.getInstancia().adicionarComandoNaPilha("/buscarFilme");
+				gerenciadorComandos.adicionarComandoNaPilha("/buscarFilme");
 
 				return String.format("Resultados para \"%s\":", strTermo);
 			} catch (IOException e) {
