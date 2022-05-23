@@ -37,7 +37,7 @@ public class MoviesApi {
 			StringBuilder sbUrlComParametros = new StringBuilder("");
 			sbUrlComParametros.append(apiProtocol);
 			sbUrlComParametros.append(apiUrl);
-			sbUrlComParametros.append("/auto-complete");
+			sbUrlComParametros.append("/title/find");
 			sbUrlComParametros.append(String.format("?q=%s", termo));
 
 			// Efetua a requisição
@@ -120,10 +120,10 @@ public class MoviesApi {
 
 			StringBuilder sbInfoFilme = new StringBuilder("");
 
-			sbInfoFilme.append(String.format("Top #%o", filme.getRank()));
-			sbInfoFilme.append(String.format("\n%s", filme.getNome()));
+			sbInfoFilme.append(String.format("%s (%o)", filme.getNome(), filme.getAnoLancamento()));
 			sbInfoFilme.append(String.format("\nCategoria: %s", filme.getCategoria()));
 			sbInfoFilme.append(String.format("\nAtores Principais: %s", filme.getAtoresPrincipais()));
+			sbInfoFilme.append(String.format("\nImagem: %s", filme.getUrlImagem()));
 
 			return sbInfoFilme.toString();
 		};

@@ -74,7 +74,7 @@ public class GerenciadorComandosBot {
 
 			// Caso o comando pai seja o inicial, exibe mensagem dizendo que já está no
 			// comando inicial
-			if (comandoPaiAnterior.equals("/inicio")) {
+			if (comandoPaiAnterior.toLowerCase().equals("/inicio".toLowerCase())) {
 				return "Você já se encontra no comando inicial";
 			}
 
@@ -140,7 +140,7 @@ public class GerenciadorComandosBot {
 	// Caso o comando seja o /voltar, ou caso o comando seja o comando pai,
 	// significa que este comando alterou a pilha
 	public boolean verificarSeComandoAlterouPilha(String comando) {
-		return comando.equals("/voltar") || this.getComandoPaiAtual().equals(comando);
+		return comando.toLowerCase().equals("/voltar".toLowerCase()) || this.getComandoPaiAtual().toLowerCase().equals(comando.toLowerCase());
 	}
 
 	// Adiciona vários comandos na lista
@@ -155,7 +155,7 @@ public class GerenciadorComandosBot {
 	public void adicionarComando(ComandoBot comandoBot) {
 		// Antes de adicionar, remove qualquer comando que tenha este nome, para evitar
 		// duplicidades
-		listaTodosComandos.removeIf(c -> c.getComando().equals(comandoBot.getComando()));
+		listaTodosComandos.removeIf(c -> c.getComando().toLowerCase().equals(comandoBot.getComando().toLowerCase()));
 		listaTodosComandos.add(comandoBot);
 	}
 
@@ -186,7 +186,7 @@ public class GerenciadorComandosBot {
 	// Verifica se comando buscado na lista de comandos disponíveis
 	public boolean verificarSeComandoExiste(String comandoBuscado) {
 		Stream<ComandoBot> streamComandosEncontrados = listaTodosComandos.stream().filter(comandoBot -> {
-			return comandoBot.getComando().equals(comandoBuscado);
+			return comandoBot.getComando().toLowerCase().equals(comandoBuscado.toLowerCase());
 		});
 		return streamComandosEncontrados.toList().size() > 0;
 	}
@@ -195,8 +195,8 @@ public class GerenciadorComandosBot {
 	// independentes, e retorna o comando compatível
 	public List<ComandoBot> retornarListaComandosFilhos(String comandoBuscado) {
 		Stream<ComandoBot> streamComandosEncontrados = listaTodosComandos.stream().filter(comandoBot -> {
-			return (comandoBuscado == null || comandoBot.getComando().equals(comandoBuscado))
-					&& (comandoBot.getComandoPai() == null || comandoBot.getComandoPai().equals(this.getComandoPaiAtual()));
+			return (comandoBuscado == null || comandoBot.getComando().toLowerCase().equals(comandoBuscado.toLowerCase()))
+					&& (comandoBot.getComandoPai() == null || comandoBot.getComandoPai().toLowerCase().equals(this.getComandoPaiAtual().toLowerCase()));
 		});
 
 		return streamComandosEncontrados.toList();
@@ -225,7 +225,7 @@ public class GerenciadorComandosBot {
 		for (ComandoBot comandoBot : listaComandosFilhos) {
 			stringBuilderComandos.append("\n" + comandoBot.getInfo());
 
-			if (comandoBot.getComando().equals("/inicio") && !conteudoResposta.isEmpty()) {
+			if (comandoBot.getComando().toLowerCase().equals("/inicio".toLowerCase()) && !conteudoResposta.isEmpty()) {
 				stringBuilderComandos.append("\n\n" + conteudoResposta);
 			}
 		}

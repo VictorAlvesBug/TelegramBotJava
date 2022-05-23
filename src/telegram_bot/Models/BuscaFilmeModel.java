@@ -3,19 +3,14 @@ package telegram_bot.Models;
 import java.util.List;
 
 public class BuscaFilmeModel {
-	private List<FilmeModel> d;
-	private String q;
-	private int v;
+	private List<FilmeModel> results;
+	private String query;
 	
 	public List<FilmeModel> getListaFilmes(){
-		return this.d;
+		return results.stream().filter(filme -> filme.getNome() != null).toList();
 	}
 	
 	public String getTermoBuscado(){
-		return this.q;
-	}
-	
-	public int getV(){
-		return this.v;
+		return query;
 	}
 }

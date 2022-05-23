@@ -1,43 +1,43 @@
 package telegram_bot.Models;
 
+import java.util.List;
+
 public class FilmeModel {
-	private Object i;
 	private String id;
-	private String l;
-	private String q;
-	private int rank;
-	private String s;
-	private int y;
-	
-	public Object getI() {
-		return i;
-	}
+	private ImagemFilmeModel image;
+	private String title;
+	private String titleType;
+	private int year;
+	private List<AtorFilmeModel> principals;
 
 	public String getId() {
 		return id;
 	}
 
+	public String getUrlImagem() {
+		if (image == null || image.getUrl() == null) {
+			return "-";
+		}
+		return image.getUrl();
+	}
+
 	public String getNome() {
-		return l;
+		return title;
 	}
 
 	public String getCategoria() {
-		if(q == null) {
+		if (titleType == null) {
 			return "-";
 		}
-		return q;
-	}
-
-	public int getRank() {
-		return rank;
-	}
-
-	public String getAtoresPrincipais() {
-		return s;
+		return titleType;
 	}
 
 	public int getAnoLancamento() {
-		return y;
+		return year;
 	}
-	
+
+	public String getAtoresPrincipais() {
+		return String.join(", ", principals.stream().map(ator -> ator.getName()).toList());
+	}
+
 }
