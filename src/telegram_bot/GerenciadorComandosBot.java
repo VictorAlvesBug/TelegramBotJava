@@ -29,24 +29,22 @@ public class GerenciadorComandosBot {
 	// disponíveis em relação a
 	// este contexto
 	private static MoviesApi moviesApi;
-	
 
-	
+	private static TicTacToeGame ticTacToeGame;
+
 	public GerenciadorComandosBot() {
-		if(moviesApi == null)
-		{
+		if (moviesApi == null) {
 			Console.printarComentario("Erro ao instanciar GerenciadorComandosBot", true);
 			return;
 		}
 	}
-	
+
 	public GerenciadorComandosBot(String apiKeyMovies) throws Exception {
 
-		if(moviesApi != null)
-		{
+		if (moviesApi != null) {
 			return;
 		}
-		
+
 		// Inicializa a "fachada" da API de filmes
 		moviesApi = new MoviesApi(apiKeyMovies);
 
@@ -65,6 +63,10 @@ public class GerenciadorComandosBot {
 
 		// Adiciona comandos específicos da API de filmes
 		this.adicionarComando(moviesApi.retornarListaComandos(comandoPai, this));
+
+		ticTacToeGame = new TicTacToeGame();
+
+		this.adicionarComando(ticTacToeGame.retornarListaComandos(comandoPai, this));
 
 		// Últimos comandos da lista, totalmente independente (pode ser executado a
 		// qualquer momento)
@@ -86,7 +88,7 @@ public class GerenciadorComandosBot {
 		}));
 
 		// Vai direto para o comando inicio
-		adicionarComando(new ComandoBot("/inicio", "Retornar para o comando início", a -> {
+		adicionarComando(new ComandoBot("/inicio", "Retornar para o comando inicial", a -> {
 			this.voltarAoComandoInicialDaPilha();
 			return "Você retornou para o comando inicial";
 		}));
@@ -97,8 +99,12 @@ public class GerenciadorComandosBot {
 	}
 
 	public String getHelp() {
-		// Retorna o help (lista de comandos) anterior caso não esteja nula
-		if (helpAnterior == null) {
+		return getHelp(false);
+	}
+
+	public String getHelp(boolean forcarRecarregamento) {
+		// Retorna o help (lista de comandos) anterior caso esteja nulo ou tenha forçado o recarregamento
+		if (helpAnterior == null || forcarRecarregamento) {
 			return this.retornarStrListaComandos();
 		}
 
@@ -140,7 +146,8 @@ public class GerenciadorComandosBot {
 	// Caso o comando seja o /voltar, ou caso o comando seja o comando pai,
 	// significa que este comando alterou a pilha
 	public boolean verificarSeComandoAlterouPilha(String comando) {
-		return comando.toLowerCase().equals("/voltar".toLowerCase()) || this.getComandoPaiAtual().toLowerCase().equals(comando.toLowerCase());
+		return comando.toLowerCase().equals("/voltar".toLowerCase())
+				|| this.getComandoPaiAtual().toLowerCase().equals(comando.toLowerCase());
 	}
 
 	// Adiciona vários comandos na lista
@@ -155,8 +162,12 @@ public class GerenciadorComandosBot {
 	public void adicionarComando(ComandoBot comandoBot) {
 		// Antes de adicionar, remove qualquer comando que tenha este nome, para evitar
 		// duplicidades
-		listaTodosComandos.removeIf(c -> c.getComando().toLowerCase().equals(comandoBot.getComando().toLowerCase()));
+		removerComando(comandoBot.getComando());
 		listaTodosComandos.add(comandoBot);
+	}
+	
+	public void removerComando(String comando) {
+		listaTodosComandos.removeIf(c -> c.getComando().toLowerCase().equals(comando.toLowerCase()));
 	}
 
 	// Tenta rodar o trecho de código vinculado ao comando, aplicando os parâmetros
@@ -195,11 +206,19 @@ public class GerenciadorComandosBot {
 	// independentes, e retorna o comando compatível
 	public List<ComandoBot> retornarListaComandosFilhos(String comandoBuscado) {
 		Stream<ComandoBot> streamComandosEncontrados = listaTodosComandos.stream().filter(comandoBot -> {
-			return (comandoBuscado == null || comandoBot.getComando().toLowerCase().equals(comandoBuscado.toLowerCase()))
-					&& (comandoBot.getComandoPai() == null || comandoBot.getComandoPai().toLowerCase().equals(this.getComandoPaiAtual().toLowerCase()));
+			return (comandoBuscado == null
+					|| comandoBot.getComando().toLowerCase().equals(comandoBuscado.toLowerCase()))
+					&& (comandoBot.getComandoPai() == null || comandoBot.getComandoPai().toLowerCase()
+							.equals(this.getComandoPaiAtual().toLowerCase()));
 		});
 
 		return streamComandosEncontrados.toList();
+	}
+
+	public ComandoBot retornarComandoBotPai() {
+		String nomeComandoPai = getComandoPaiAtual().toLowerCase();
+		return listaTodosComandos.stream()
+				.filter(comandoBot -> comandoBot.getComando().toLowerCase().equals(nomeComandoPai)).toList().get(0);
 	}
 
 	public String retornarStrListaComandos() {
@@ -208,25 +227,49 @@ public class GerenciadorComandosBot {
 
 	public String retornarStrListaComandos(String conteudoResposta) {
 		// Retorna array de comandos disponíveis
-		List<ComandoBot> listaComandosFilhos = this.retornarListaComandosFilhos(null);
+		List<ComandoBot> listaComandosFilhosEIndependentes = this.retornarListaComandosFilhos(null);
 
 		// Caso não encontre nenhum comando
-		if (listaComandosFilhos.size() == 0) {
+		if (listaComandosFilhosEIndependentes.size() == 0) {
 			return "Nenhum comando encontrado";
 		}
+
+		List<ComandoBot> listaComandosIndependentes = listaComandosFilhosEIndependentes.stream()
+				.filter(comandoBot -> comandoBot.getComandoPai() == null).toList();
 
 		String breadcrumb = String.format("Você está em: \n%s", this.retornarStrPilha());
 
 		// Inicializa um buffer de strings, para concatenar os comandos disponíveis
 		StringBuilder stringBuilderComandos = new StringBuilder(breadcrumb);
-		stringBuilderComandos.append("\n\nComandos disponíveis:");
 
-		// Adiciona cada um dos comandos no buffer de strings
-		for (ComandoBot comandoBot : listaComandosFilhos) {
-			stringBuilderComandos.append("\n" + comandoBot.getInfo());
+		String conteudoPersonalizadoComandoPai = retornarComandoBotPai().getConteudoPersonalizado();
 
-			if (comandoBot.getComando().toLowerCase().equals("/inicio".toLowerCase()) && !conteudoResposta.isEmpty()) {
-				stringBuilderComandos.append("\n\n" + conteudoResposta);
+		if (conteudoPersonalizadoComandoPai == null) {
+
+			stringBuilderComandos.append("\n\nComandos disponíveis:");
+
+			// Adiciona cada um dos comandos no buffer de strings
+			for (ComandoBot comandoBot : listaComandosFilhosEIndependentes) {
+				stringBuilderComandos.append("\n" + comandoBot.getInfo());
+
+				if (comandoBot.getComando().toLowerCase().equals("/inicio".toLowerCase())
+						&& !conteudoResposta.isEmpty()) {
+					stringBuilderComandos.append("\n\n" + conteudoResposta);
+				}
+			}
+		} else {
+			stringBuilderComandos.append(conteudoPersonalizadoComandoPai);
+
+			stringBuilderComandos.append("\n\nOutros comandos:");
+
+			// Adiciona cada um dos comandos no buffer de strings
+			for (ComandoBot comandoBot : listaComandosIndependentes) {
+				stringBuilderComandos.append("\n" + comandoBot.getInfo());
+
+				if (comandoBot.getComando().toLowerCase().equals("/inicio".toLowerCase())
+						&& !conteudoResposta.isEmpty()) {
+					stringBuilderComandos.append("\n\n" + conteudoResposta);
+				}
 			}
 		}
 

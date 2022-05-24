@@ -128,7 +128,7 @@ public class MoviesApi {
 			return sbInfoFilme.toString();
 		};
 
-		// Funça que permite buscar um filme utilizando um parâmetro
+		// Função que permite buscar um filme utilizando um parâmetro
 		listaComandos.add(new ComandoBot("/buscarFilme", "Buscar filme", termo -> {
 			String strTermo = (String) termo;
 			if (strTermo == null || strTermo.isEmpty()) {
