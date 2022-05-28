@@ -8,6 +8,7 @@ public class Console {
 	// Armazena a última data que foi exibida, para que não seja exibida novamente
 	// caso seja a mesma
 	private static String strUltimaDataExibida = "";
+
 	// Armazena a última hora que foi exibida, para que não seja exibida novamente
 	// caso seja a mesma (e seja a mesma data)
 	private static String strUltimaHoraExibida = "";
@@ -45,7 +46,7 @@ public class Console {
 		printarComentario(mensagem, false);
 	}
 
-	public static void printarComentario(String mensagem, boolean forcarExibicao ) {
+	public static void printarComentario(String mensagem, boolean forcarExibicao) {
 		if (habilitarExibicaoComentario || forcarExibicao) {
 			printarDataHoraAtual();
 			// Exibe no console qualquer informação adicional
@@ -53,13 +54,17 @@ public class Console {
 		}
 	}
 
-	public static void habilitarExibicao(boolean comentario, boolean mensagemEnviada, boolean mensagemRecebida, boolean erro) {
+	// Define quais tipos de prints devem ser exibidos
+	// Obs: mesmo que todos os prints estejam desativados, todos os comentários com
+	// exibição forçada serão printados
+	public static void habilitarExibicao(boolean comentario, boolean mensagemEnviada, boolean mensagemRecebida,
+			boolean erro) {
 		habilitarExibicaoComentario = comentario;
 		habilitarExibicaoMensagemEnviada = mensagemEnviada;
 		habilitarExibicaoMensagemRecebida = mensagemRecebida;
 		habilitarExibicaoErro = erro;
 	}
-	
+
 	private static void printarDataHoraAtual() {
 		printarDataAtual();
 		printarHoraAtual();
