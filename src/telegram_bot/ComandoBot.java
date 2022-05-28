@@ -19,18 +19,20 @@ public class ComandoBot {
 	}
 
 	public ComandoBot(String comando, String descricao, IFuncao funcao, String comandoPai) {
-		// Armazena demais atributos informados pelos parâmetros
+		// Armazena atributos informados pelos parâmetros
 		this.comando = comando;
 		this.descricao = descricao;
 		this.funcao = funcao;
 
-		/*
-		 * comandoPai = null --> comando pode ser executado a qualquer momento
-		 * comandoPai = {não nulo} --> comando só pode ser executado quando estiver
-		 * neste contexto
-		 */
+		// comandoPai == null --> comando pode ser executado a qualquer momento
+		// comandoPai != null --> comando só pode ser executado quando estiver
+		// neste contexto
 		this.comandoPai = comandoPai;
 
+		// Caso o conteúdo personalizado seja preenchido:
+		// Quando estiver no contexto deste comando, o conteúdo personalizado será
+		// exibido no lugar dos comandos filhos e logo abaixo serão exibidos os comandos
+		// independentes
 		this.conteudoPersonalizado = null;
 	}
 

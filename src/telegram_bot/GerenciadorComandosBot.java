@@ -1,7 +1,6 @@
 package telegram_bot;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 import java.util.stream.Stream;
@@ -9,11 +8,10 @@ import java.util.stream.Stream;
 // Classe no padrão MonoState:
 // Garante que todas as instâncias da classe acessarão aos mesmos atributos estáticos.
 public class GerenciadorComandosBot {
-
 	// Lista de comandos aceitos
 	private static List<ComandoBot> listaTodosComandos;
 
-	// Pilha de comandos executados em arvore.
+	// Pilha de comandos executados em árvore.
 	// Similar a uma entrada em diretórios que possuem uma lista de diretórios
 	// internos.
 	// O contexto muda, então nem todos os comandos disponíveis em um nível estão
@@ -21,16 +19,13 @@ public class GerenciadorComandosBot {
 	private static Stack<String> pilhaComandosPai;
 
 	// Armazena a última mensagem de help (lista de comandos) enviada para evitar
-	// ficar buscando entre
-	// os comandos disponíveis no momento
+	// que sejam buscados os comandos disponíveis sendo que são os mesmos
+	// previamente exibidos
 	private static String helpAnterior = null;
 
-	// Objeto que efetua requisições para a api de filmes e define os comandos
-	// disponíveis em relação a
-	// este contexto
+	// Objeto que efetua requisições para a API de filmes e define os comandos
+	// disponíveis em relação a este contexto
 	private static MoviesApi moviesApi;
-
-	private static TicTacToeGame ticTacToeGame;
 
 	public GerenciadorComandosBot() {
 		if (moviesApi == null) {
@@ -41,6 +36,7 @@ public class GerenciadorComandosBot {
 
 	public GerenciadorComandosBot(String apiKeyMovies) throws Exception {
 
+		// Caso a api de filmes já esteja instanciada, aborta re-execução do construtor
 		if (moviesApi != null) {
 			return;
 		}
@@ -58,15 +54,23 @@ public class GerenciadorComandosBot {
 		// qualquer momento)
 		this.adicionarComando(new ComandoBot("/help", "Exibir lista de comandos disponíveis", a -> this.getHelp()));
 
+		// Vai direto para o comando /inicio
+		adicionarComando(new ComandoBot("/inicio", "Retornar para o comando inicial", a -> {
+			this.voltarAoComandoInicialDaPilha();
+			return "Você retornou para o comando inicial";
+		}));
+
 		// Adiciona comandos básicos
 		this.adicionarComando((new ComandosBasicos()).retornarListaComandos(comandoPai, this));
+
+		// Adiciona comandos com informações dos devs
+		this.adicionarComando((new DevsInfo()).retornarListaComandos(comandoPai, this));
 
 		// Adiciona comandos específicos da API de filmes
 		this.adicionarComando(moviesApi.retornarListaComandos(comandoPai, this));
 
-		ticTacToeGame = new TicTacToeGame();
-
-		this.adicionarComando(ticTacToeGame.retornarListaComandos(comandoPai, this));
+		// Adiciona comandos referentes ao jogo da velha (tic-tac-toe)
+		this.adicionarComando((new TicTacToeGame()).retornarListaComandos(comandoPai, this));
 
 		// Últimos comandos da lista, totalmente independente (pode ser executado a
 		// qualquer momento)
@@ -87,13 +91,7 @@ public class GerenciadorComandosBot {
 			return "Você retornou para o comando " + comandoPaiAtual;
 		}));
 
-		// Vai direto para o comando inicio
-		adicionarComando(new ComandoBot("/inicio", "Retornar para o comando inicial", a -> {
-			this.voltarAoComandoInicialDaPilha();
-			return "Você retornou para o comando inicial";
-		}));
-
-		// Instancia a pilha de comandos pai
+		// Instancia a pilha de comandos pai (espécie de breadcrumb)
 		pilhaComandosPai = new Stack<String>();
 		pilhaComandosPai.add(comandoPai);
 	}
@@ -103,11 +101,13 @@ public class GerenciadorComandosBot {
 	}
 
 	public String getHelp(boolean forcarRecarregamento) {
-		// Retorna o help (lista de comandos) anterior caso esteja nulo ou tenha forçado o recarregamento
+		// Retorna a lista de comandos atualizada caso o helpAnterior esteja nulo ou
+		// esteja sendo feito o regarregamento forçado
 		if (helpAnterior == null || forcarRecarregamento) {
 			return this.retornarStrListaComandos();
 		}
 
+		// Caso contrário, retorna o helpAnterior
 		return helpAnterior;
 	}
 
@@ -130,13 +130,13 @@ public class GerenciadorComandosBot {
 		pilhaComandosPai.pop();
 	}
 
-	// Retorna um comando na pilha, voltando para o contexto inicial
+	// Retorna todos os comandos na pilha, voltando para o contexto inicial
 	public void voltarAoComandoInicialDaPilha() {
 		pilhaComandosPai = new Stack<String>();
 		pilhaComandosPai.add("/inicio");
 	}
 
-	// Exibe a pilha em forma de breadcrumb
+	// Exibe a pilha em forma de breadcrumb visual
 	public String retornarStrPilha() {
 		return pilhaComandosPai.stream().reduce("", (acc, item) -> {
 			return String.format("%s > %s", acc, item);
@@ -144,7 +144,7 @@ public class GerenciadorComandosBot {
 	}
 
 	// Caso o comando seja o /voltar, ou caso o comando seja o comando pai,
-	// significa que este comando alterou a pilha
+	// significa que este comando do parâmetro alterou a pilha
 	public boolean verificarSeComandoAlterouPilha(String comando) {
 		return comando.toLowerCase().equals("/voltar".toLowerCase())
 				|| this.getComandoPaiAtual().toLowerCase().equals(comando.toLowerCase());
@@ -165,7 +165,8 @@ public class GerenciadorComandosBot {
 		removerComando(comandoBot.getComando());
 		listaTodosComandos.add(comandoBot);
 	}
-	
+
+	// Remove um comando da lista
 	public void removerComando(String comando) {
 		listaTodosComandos.removeIf(c -> c.getComando().toLowerCase().equals(comando.toLowerCase()));
 	}
@@ -180,6 +181,8 @@ public class GerenciadorComandosBot {
 			return null;
 		}
 
+		// Caso contrário
+
 		// Busca comando-filho do comando-pai atual
 		List<ComandoBot> listaComandosFilhos = this.retornarListaComandosFilhos(comando);
 
@@ -189,12 +192,11 @@ public class GerenciadorComandosBot {
 			return String.format("Comando %s não está disponível neste ponto da conversa", comando);
 		}
 
-		// executa a função atrelada ao comando filho
-		// TODO: Permitir a passagem de informações por argumento
+		// Caso contrário, executa a função atrelada ao comando filho
 		return listaComandosFilhos.get(0).executarFuncao(parametros);
 	}
 
-	// Verifica se comando buscado na lista de comandos disponíveis
+	// Verifica se comando buscado existe na lista de comandos
 	public boolean verificarSeComandoExiste(String comandoBuscado) {
 		Stream<ComandoBot> streamComandosEncontrados = listaTodosComandos.stream().filter(comandoBot -> {
 			return comandoBot.getComando().toLowerCase().equals(comandoBuscado.toLowerCase());
@@ -203,7 +205,7 @@ public class GerenciadorComandosBot {
 	}
 
 	// Busca comando na lista de comandos filhos ou na lista de comandos
-	// independentes, e retorna o comando compatível
+	// independentes, e retorna os comandos compatíveis
 	public List<ComandoBot> retornarListaComandosFilhos(String comandoBuscado) {
 		Stream<ComandoBot> streamComandosEncontrados = listaTodosComandos.stream().filter(comandoBot -> {
 			return (comandoBuscado == null
@@ -215,16 +217,20 @@ public class GerenciadorComandosBot {
 		return streamComandosEncontrados.toList();
 	}
 
+	// Retorna o comandoPai atual (o Objeto comandoBot, e não apenas a String
+	// comando)
 	public ComandoBot retornarComandoBotPai() {
 		String nomeComandoPai = getComandoPaiAtual().toLowerCase();
 		return listaTodosComandos.stream()
 				.filter(comandoBot -> comandoBot.getComando().toLowerCase().equals(nomeComandoPai)).toList().get(0);
 	}
 
+	// Retorna a lista de comandos disponíveis
 	public String retornarStrListaComandos() {
 		return this.retornarStrListaComandos("");
 	}
 
+	// Retorna a lista de comandos disponíveis
 	public String retornarStrListaComandos(String conteudoResposta) {
 		// Retorna array de comandos disponíveis
 		List<ComandoBot> listaComandosFilhosEIndependentes = this.retornarListaComandosFilhos(null);
@@ -244,11 +250,13 @@ public class GerenciadorComandosBot {
 
 		String conteudoPersonalizadoComandoPai = retornarComandoBotPai().getConteudoPersonalizado();
 
+		// Caso não tenha um conteúdo personalizado, exibe os comandos filhos e os
+		// comandos independentes juntos numa mesma lista
 		if (conteudoPersonalizadoComandoPai == null) {
 
 			stringBuilderComandos.append("\n\nComandos disponíveis:");
 
-			// Adiciona cada um dos comandos no buffer de strings
+			// Adiciona cada um dos comandos (filhos + independentes) no buffer de strings
 			for (ComandoBot comandoBot : listaComandosFilhosEIndependentes) {
 				stringBuilderComandos.append("\n" + comandoBot.getInfo());
 
@@ -258,11 +266,13 @@ public class GerenciadorComandosBot {
 				}
 			}
 		} else {
+			// Caso tenha um conteúdo personalizado, exibe este conteúdo no lugar dos
+			// comandos filhos e exibe separadamente os comandos independentes
 			stringBuilderComandos.append(conteudoPersonalizadoComandoPai);
 
 			stringBuilderComandos.append("\n\nOutros comandos:");
 
-			// Adiciona cada um dos comandos no buffer de strings
+			// Adiciona cada um dos comandos independentes no buffer de strings
 			for (ComandoBot comandoBot : listaComandosIndependentes) {
 				stringBuilderComandos.append("\n" + comandoBot.getInfo());
 

@@ -25,15 +25,15 @@ public class MoviesApi {
 			throw new Exception("A apiKey informada é inválida");
 		}
 
+		// Armazena as informações para fazer as futuras requisições à API de filmes
 		this.apiProtocol = "https://";
 		this.apiUrl = "online-movie-database.p.rapidapi.com";
 		this.apiKey = apiKey;
 	}
 
 	public BuscaFilmeModel buscarFilme(String termo) throws IOException {
-
 		try {
-			// Constroi a url da requisição
+			// Constrói a url da requisição
 			StringBuilder sbUrlComParametros = new StringBuilder("");
 			sbUrlComParametros.append(apiProtocol);
 			sbUrlComParametros.append(apiUrl);
@@ -55,8 +55,7 @@ public class MoviesApi {
 			if (status >= 200 && status < 300) {
 				// Recupera dados retornados da API e popula objeto da classe BuscaFilmeModel
 				String jsonString = response.body().string();
-				Gson g = new Gson();
-				BuscaFilmeModel retorno = g.fromJson(jsonString, BuscaFilmeModel.class);
+				BuscaFilmeModel retorno = (new Gson()).fromJson(jsonString, BuscaFilmeModel.class);
 
 				return retorno;
 			}
@@ -94,8 +93,7 @@ public class MoviesApi {
 			if (status >= 200 && status < 300) {
 				// Recupera dados retornados da API e popula objeto da classe DetalhesFilmeModel
 				String jsonString = response.body().string();
-				Gson g = new Gson();
-				DetalhesFilmeModel retorno = g.fromJson(jsonString, DetalhesFilmeModel.class);
+				DetalhesFilmeModel retorno = (new Gson()).fromJson(jsonString, DetalhesFilmeModel.class);
 
 				return retorno;
 			}
@@ -108,17 +106,14 @@ public class MoviesApi {
 
 	}
 
-	// Acrescenta os comandos referentes a API de filmes na lista de comandos disponíveis no contexto raiz
+	// Acrescenta os comandos referentes a API de filmes na lista de comandos
+	// disponíveis no contexto raiz
 	public List<ComandoBot> retornarListaComandos(String comandoPai, GerenciadorComandosBot gerenciadorComandos) {
-
-		// Instancia a lista de comandos
-		List<ComandoBot> listaComandos = new ArrayList<ComandoBot>();
-
 		// Função responsável por retornar as informações detalhadas de um filme
 		IFuncao fDetalhesFilme = objFilme -> {
 			FilmeModel filme = FilmeModel.class.cast(objFilme);
 
-			StringBuilder sbInfoFilme = new StringBuilder("");
+			StringBuilder sbInfoFilme = new StringBuilder();
 
 			sbInfoFilme.append(String.format("%s (%o)", filme.getNome(), filme.getAnoLancamento()));
 			sbInfoFilme.append(String.format("\nCategoria: %s", filme.getCategoria()));
@@ -128,20 +123,30 @@ public class MoviesApi {
 			return sbInfoFilme.toString();
 		};
 
+		// Instancia a lista de comandos
+		List<ComandoBot> listaComandos = new ArrayList<ComandoBot>();
+
 		// Função que permite buscar um filme utilizando um parâmetro
 		listaComandos.add(new ComandoBot("/buscarFilme", "Buscar filme", termo -> {
 			String strTermo = (String) termo;
+			// Caso não tenha sido informado o nome do filme por parâmetro, informa ao
+			// usuário como buscar por um filme
 			if (strTermo == null || strTermo.isEmpty()) {
 				return "Para buscar por um filme, utilize o seguinte formato de busca:\n/buscarFilme \"Nome do Filme\"";
 			}
 
 			try {
+				// Retorna lista de filmes compatíveis com o termo buscado
 				List<FilmeModel> listaFilmes = buscarFilme(strTermo).getListaFilmes();
 
+				// Caso a lista esteja vazia, informa que não foi encontrado nenhum filme com
+				// este nome
 				if (listaFilmes.isEmpty()) {
 					return String.format("Nenhum resultado para \"%s\"", strTermo);
 				}
 
+				// Caso contrário, itera cada um dos filmes e adiciona um comando responsável
+				// por exibir mais informações sobre este filme
 				for (int i = 0; i < listaFilmes.size(); i++) {
 					String comando = String.format("/%s", i);
 					FilmeModel filme = listaFilmes.get(i);
@@ -151,11 +156,11 @@ public class MoviesApi {
 					gerenciadorComandos.adicionarComando(comandoBot);
 				}
 
+				// Entra no contexto /buscarFilme
 				gerenciadorComandos.adicionarComandoNaPilha("/buscarFilme");
 
 				return String.format("Resultados para \"%s\":", strTermo);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				return "Erro ao buscar filme";
 			}
 		}, comandoPai));
